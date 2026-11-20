@@ -123,3 +123,15 @@ test('query: JSONPath subset', () => {
   assert.deepStrictEqual(paths('$.nope.x'), []);
   assert.throws(() => query(doc, '$.store[('), /JSONPath/);
 });
+
+test('JSON Lines values must be separated (review finding)', () => {
+  for (const s of ['01', 'truefalse', '1-2', 'nulltrue']) assert.throws(() => parse(s, { multi: true }), /line break/, s);
+  const doc = parse('{"a":1}{"a":2}\n[1] "x"', { multi: true });
+  assert.strictEqual(doc.count[doc.root], 4);
+});
+
+test('depth beyond 65535 is stored correctly (review finding)', () => {
+  const d = 70000;
+  const doc = parse('['.repeat(d) + ']'.repeat(d));
+  assert.strictEqual(doc.depth[doc.n - 1], d - 1);
+});

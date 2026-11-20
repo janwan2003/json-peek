@@ -21,7 +21,9 @@
   function show() {
     if (!text.trim()) { viewer.load('{}'); return; }
     var res = viewer.load(text, { multi: multi.checked });
-    if (res.ok && sort.checked) viewer.load(res.doc.stringify(res.doc.root, 2, true), { multi: false });
+    if (res.ok && sort.checked) {
+      try { viewer.load(res.doc.stringify(res.doc.root, 2, true), { multi: false }); } catch (e) { note.textContent = e.message; }
+    }
   }
   function setText(t, fromFile) {
     text = t;
@@ -34,8 +36,10 @@
     var res = viewer.load(text, { multi: multi.checked });
     if (!res.ok) return;
     var d = res.doc, out;
-    if (d.multi && ind === 0) out = d.children(d.root).map(function (c) { return d.stringify(c, 0, sort.checked); }).join('\n');
-    else out = d.stringify(d.root, ind, sort.checked);
+    try {
+      if (d.multi && ind === 0) out = d.children(d.root).map(function (c) { return d.stringify(c, 0, sort.checked); }).join('\n');
+      else out = d.stringify(d.root, ind, sort.checked);
+    } catch (e) { note.textContent = e.message; return; }
     if (d.multi && ind !== 0) multi.checked = false;
     setText(out);
   }

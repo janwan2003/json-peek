@@ -343,7 +343,7 @@
       var m = metrics();
       if (m.k === 0) { render(); return; }
       var ff = scroller.scrollTop * m.k, vis = m.ch / RH;
-      if (r < ff) scroller.scrollTop = r / m.k;
+      if (r < ff) scroller.scrollTop = Math.floor(r / m.k);
       else if (r + 1 > ff + vis) scroller.scrollTop = (r + 1 - vis) / m.k + 0.5;
       render();
     }
@@ -396,6 +396,7 @@
       var d = state.doc;
       if (!d) return;
       var q = input.value.trim();
+      state.lastQ = q;
       var hadKeep = !!state.keep;
       clearSearch(true);
       if (!q) { if (hadKeep) rebuild(); else render(); return; }
@@ -431,7 +432,16 @@
         if (hit && id !== last) { out.push(id); last = id; }
         from = at + 1;
       }
-      return out;
+      // Strings written with escapes (\/ , \u00e9 ...) do not match in the raw text; check their decoded form.
+      var extra = [], fl = d.flags;
+      for (var i = 0; i < d.n && extra.length < limit; i++) {
+        if (!(fl[i] & 3)) continue;
+        if (((fl[i] & 2) && d.key(i).toLowerCase().indexOf(q) >= 0) || ((fl[i] & 1) && d.str(i).toLowerCase().indexOf(q) >= 0)) extra.push(i);
+      }
+      if (!extra.length) return out;
+      var merged = out.concat(extra).sort(function (a, b) { return a - b; }), uniq = [];
+      for (i = 0; i < merged.length && uniq.length < limit; i++) if (i === 0 || merged[i] !== merged[i - 1]) uniq.push(merged[i]);
+      return uniq;
     }
     function slowSearch(d, q, limit) {
       var out = [];
@@ -530,18 +540,22 @@
       if (!d || e.target !== scroller) return;
       var r = rowOf(state.sel), id = state.sel, key = e.key;
       var page = Math.max(1, Math.floor(scroller.clientHeight / RH) - 1);
-      function moveTo(row) {
-        row = Math.max(0, Math.min(state.nrows - 1, row));
-        var v = state.rows[row];
-        if (v < 0) { v = -v - 1; }
-        state.sel = v; scrollToRow(row); updateStatus();
+      // Closing-bracket rows are never selectable: skip them in the direction of travel.
+      function moveTo(row, dir) {
+        var rows = state.rows, nr = state.nrows;
+        row = Math.max(0, Math.min(nr - 1, row));
+        var k = row;
+        while (k >= 0 && k < nr && rows[k] < 0) k += dir;
+        if (k < 0 || k >= nr) { k = row; while (k >= 0 && k < nr && rows[k] < 0) k -= dir; }
+        if (k < 0 || k >= nr) return;
+        state.sel = rows[k]; scrollToRow(k); updateStatus();
       }
-      if (key === 'ArrowDown' || key === 'j') { moveTo(r + 1 + (state.rows[r + 1] < 0 ? 1 : 0)); }
-      else if (key === 'ArrowUp' || key === 'k') { moveTo(r - 1 - (r > 0 && state.rows[r - 1] < 0 ? 1 : 0)); }
-      else if (key === 'PageDown') moveTo(r + page);
-      else if (key === 'PageUp') moveTo(r - page);
-      else if (key === 'Home') moveTo(0);
-      else if (key === 'End') moveTo(state.nrows - 1);
+      if (key === 'ArrowDown' || key === 'j') moveTo(r + 1, 1);
+      else if (key === 'ArrowUp' || key === 'k') moveTo(r - 1, -1);
+      else if (key === 'PageDown') moveTo(r + page, 1);
+      else if (key === 'PageUp') moveTo(r - page, -1);
+      else if (key === 'Home') moveTo(0, 1);
+      else if (key === 'End') moveTo(state.nrows - 1, -1);
       else if (key === 'ArrowRight' || key === 'l') {
         if (d.type[id] >= T_OBJ && d.count[id] > 0 && !state.expanded[id]) { toggle(id, e.altKey); revealSel(); }
         else if (d.type[id] >= T_OBJ && d.count[id] > 0) moveTo(r + 1);
@@ -552,7 +566,7 @@
       else if ((e.ctrlKey || e.metaKey) && key === 'c') {
         var s = shadow.getSelection ? shadow.getSelection() : window.getSelection();
         if (s && String(s).length) return;
-        doCopy(valueText(id), 'value');
+        try { doCopy(valueText(id), 'value'); } catch (err) { toast(err.message); }
       } else if (key === 'n') gotoMatch(state.cur + 1);
       else if (key === 'N') gotoMatch(state.cur - 1);
       else if (key === '/') { input.focus(); input.select(); }
@@ -571,7 +585,7 @@
       if (e.key === 'Enter') {
         e.preventDefault();
         clearTimeout(searchTimer);
-        if (!state.matches || input.value.trim() !== state.lastQ) { state.lastQ = input.value.trim(); runSearch(); }
+        if (!state.matches || input.value.trim() !== state.lastQ) runSearch();
         else gotoMatch(state.cur + (e.shiftKey ? -1 : 1));
       } else if (e.key === 'Escape') {
         var had = !!state.keep;
@@ -598,6 +612,10 @@
       var lvl = b.getAttribute('data-lvl');
       if (lvl && state.doc) { expandToLevel(Number(lvl)); return; }
       var act = b.getAttribute('data-act'), d = state.doc;
+      try { runAction(act, d); } catch (err) { toast(err.message || String(err)); }
+    });
+
+    function runAction(act, d) {
       switch (act) {
         case 'collapse': if (d) { expandToLevel(1); select(d.root, true); } break;
         case 'expand':
@@ -611,7 +629,7 @@
         case 'jsonl': load(state.text, { multi: true }); break;
         case 'showraw': setView('raw'); break;
       }
-    });
+    }
 
     function save() {
       var d = state.doc;

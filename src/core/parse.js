@@ -7,7 +7,7 @@
  * stored in document (pre-order) order, so a node's subtree is the contiguous
  * range [id, id + size[id]). Strings are decoded lazily, only when shown.
  *
- * Memory: about 37 bytes per node plus the source string itself.
+ * Memory: about 39 bytes per node plus the source string itself.
  */
 (function (root) {
   'use strict';
@@ -80,7 +80,7 @@
     var keyStart = new Int32Array(cap), keyEnd = new Int32Array(cap);
     var parent = new Int32Array(cap), size = new Int32Array(cap);
     var count = new Int32Array(cap), index = new Int32Array(cap);
-    var depth = new Uint16Array(cap);
+    var depth = new Int32Array(cap);
     var n = 0;
     var maxDepth = 0;
 
@@ -246,6 +246,10 @@
         var isObj = type[top] === T_OBJ;
         if (multi && sp === 1) {
           if (pos >= end) { stop[0] = end; size[0] = n; sp = 0; return finish(); }
+          var prev = text.charCodeAt(pos - 1);
+          if (!(prev === 32 || prev === 10 || prev === 13 || prev === 9 || prev === 125 || prev === 93 || prev === 34 || text.charCodeAt(pos) === 44)) {
+            fail('Expected a line break between JSON Lines values', pos);
+          }
           if (text.charCodeAt(pos) === 44) { pos++; skipWs(); } // tolerate commas between lines
           break; // next top-level value
         }

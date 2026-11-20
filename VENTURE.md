@@ -87,12 +87,15 @@ What exists (all verified 2026-11-20, see Log):
   raw view, save, and light/dark/auto themes.
 - `extension/`: MV3. The content script detects JSON content types, plus `text/plain` and JS types that parse as JSON.
   Its only API permission is `storage`. The toolbar icon opens a paste/drop viewer page.
-- Tests: `node --test test/*.test.js` (11 unit tests). `node test/e2e.js` (14 checks) loads the real built
+- Tests: `node --test test/*.test.js` (13 unit tests). `node test/e2e.js` (16 checks) loads the real built
   extension into Chromium 159 via playwright-core and serves JSON, bad JSON, JSON Lines, text/plain, prose, HTML,
   XSSI and a 50 MB document.
 - Known gaps: Chrome downloads `application/x-ndjson` instead of displaying it, so the extension can't render those.
   Firefox is not ported yet (its built-in viewer intercepts JSON). Text selection across rows is limited by
-  virtualisation; use the Raw tab or the copy buttons. Search matches raw text, so `é` will not match `\u00e9`.
+  virtualisation; use the Raw tab or the copy buttons.
+- Open from code review (2026-11-20, a separate agent; fixed items have regression tests): Save on a JSON Lines page
+  writes a `.jsonl.json` array, not lines. Search highlighting is offset next to characters whose lowercase is
+  longer (display only). Every page evaluates about 60 KB of viewer JS before bailing out, because all scripts are content scripts.
 
 ## Next steps
 
@@ -102,9 +105,11 @@ What exists (all verified 2026-11-20, see Log):
 3. Firefox AMO port: disable or override the built-in JSON viewer (`devtools.jsonview.enabled`), or use
    `webRequest.filterResponseData`. Edge Add-ons can use the same package.
 4. Benchmarks page: 1/20/100 MB against Chrome's built-in viewer and JSONVue, with published numbers (not done yet).
-5. Performance: the parser is about 2.5× slower than `JSON.parse`. Try an `indexOf`-based string scan. Optionally
+5. Lazy-load the viewer: inject only a tiny detector, then load the rest with `chrome.scripting` (adds the
+   `scripting` permission). This cuts per-page cost on non-JSON sites. Also fix Save for JSON Lines.
+6. Performance: the parser is about 2.5× slower than `JSON.parse`. Try an `indexOf`-based string scan. Optionally
    move parsing to a worker for files over 20 MB so the tab never blocks.
-6. Launch posts once the store listing is live (Show HN, a dev.to write-up of the big-number bug). These are organic, one post each.
+7. Launch posts once the store listing is live (Show HN, a dev.to write-up of the big-number bug). These are organic, one post each.
 
 ## Monetization plan
 
@@ -124,3 +129,7 @@ Sponsors/donation link (no in-page prompts), or a paid desktop/web "JSON workben
   expand all 60 ms, search 88 ms). Actions run 44730952580 succeeded (build + deploy). Live URL curled 200 for
   /, privacy, JS, zip. The live page was loaded in headless Chromium: it rendered pasted JSON, with 0 console errors
   and 0 network requests after pasting.
+- 2026-11-20 builder (same session): an independent review agent found no injection path. It reproduced keyboard traps
+  (ArrowDown loop on adjacent closing brackets, PageDown/End stuck), missed search on escaped strings (`\/`, `\u00e9`),
+  scaled-scroll rounding, a first-Enter no-op, unseparated JSON Lines being accepted, and depth overflow past 65,535.
+  All fixed, with tests: 13/13 unit, 16/16 e2e (50 MB: rows in 0.98 s, expand all 51 ms, search 91 ms).

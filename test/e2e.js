@@ -31,6 +31,8 @@ const docs = {
   '/prose.txt': ['text/plain', 'Just some text, not JSON.'],
   '/page.html': ['text/html', '<!doctype html><title>t</title><body><pre>{"a":1}</pre><p>html page</p></body>'],
   '/xssi.json': ['application/json', ")]}'\n{\"guarded\":true}"],
+  '/nav.json': ['application/json', '{"a":{"b":[1]},"c":2}'],
+  '/esc.json': ['application/json', '{"u":"https:\\/\\/example.com\\/x","c":"caf\\u00e9","plain":"example"}'],
   '/big.json': ['application/json', big.text],
 };
 
@@ -130,6 +132,38 @@ async function check(name, fn) {
     s = await page.evaluate(READ);
     assert.strictEqual(s.path, '$.nested.list[2]');
     await shot('search');
+  });
+
+  await check('keyboard: ArrowDown walks past adjacent closing brackets; End/ArrowUp land on real rows', async () => {
+    await open('/nav.json');
+    await page.evaluate(() => document.getElementById('json-peek-root').shadowRoot.querySelector('.scroller').focus());
+    const seen = [];
+    for (let i = 0; i < 6; i++) { await page.keyboard.press('ArrowDown'); seen.push((await page.evaluate(READ)).path); }
+    assert.deepStrictEqual(seen, ['$.a', '$.a.b', '$.a.b[0]', '$.c', '$.c', '$.c']);
+    await page.keyboard.press('Home'); await page.keyboard.press('End');
+    assert.strictEqual((await page.evaluate(READ)).path, '$.c');
+    await page.keyboard.press('ArrowUp');
+    assert.strictEqual((await page.evaluate(READ)).path, '$.a.b[0]');
+  });
+
+  await check('search finds strings written with escapes (\\/ and \\u00e9); first Enter advances', async () => {
+    await open('/esc.json');
+    await page.keyboard.press('Control+f');
+    await page.keyboard.type('example.com/x');
+    await page.waitForTimeout(300);
+    let s = await page.evaluate(READ);
+    assert.strictEqual(s.count, '1 / 1'); assert.strictEqual(s.path, '$.u');
+    await page.evaluate(() => { document.getElementById('json-peek-root').shadowRoot.querySelector('.search input').value = ''; });
+    await page.keyboard.type('caf\u00e9');
+    await page.waitForTimeout(300);
+    s = await page.evaluate(READ);
+    assert.strictEqual(s.path, '$.c', JSON.stringify(s));
+    await page.evaluate(() => { document.getElementById('json-peek-root').shadowRoot.querySelector('.search input').value = ''; });
+    await page.keyboard.type('example');
+    await page.waitForTimeout(300);
+    assert.strictEqual((await page.evaluate(READ)).count, '1 / 2');
+    await page.keyboard.press('Enter');
+    assert.strictEqual((await page.evaluate(READ)).count, '2 / 2');
   });
 
   await check('invalid JSON shows reason, line and column', async () => {
