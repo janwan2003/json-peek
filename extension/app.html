@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>JSON Peek</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="top">
+  <strong>JSON Peek</strong>
+  <span class="hint">Paste JSON, drop a file, or</span>
+  <label class="btn">Open file<input type="file" id="file" accept=".json,.jsonl,.ndjson,.geojson,.txt,application/json" hidden></label>
+  <label class="opt"><input type="checkbox" id="multi"> JSON Lines</label>
+  <button class="btn" id="clear">Clear</button>
+</header>
+<textarea id="input" spellcheck="false" placeholder='Paste JSON here, e.g. {"hello": "world"}'></textarea>
+<div id="viewer"></div>
+<script src="parse.js"></script>
+<script src="query.js"></script>
+<script src="viewer.js"></script>
+<script src="style.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

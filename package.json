@@ -1,0 +1,15 @@
+{
+  "name": "json-peek",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Fast, private JSON viewer extension and web tool",
+  "license": "MIT",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "test": "node --test test/*.test.js",
+    "e2e": "node scripts/build.js && node test/e2e.js"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.57.0"
+  }
+}

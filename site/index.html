@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JSON Viewer &amp; Formatter Online: Fast, Private, Exact Big Numbers | JSON Peek</title>
+<meta name="description" content="Free online JSON viewer and formatter that runs entirely in your browser. Collapsible tree, search and JSONPath, JSON Lines, exact 64-bit numbers, opens 50 MB files. Nothing is uploaded.">
+<link rel="canonical" href="https://janwan2003.github.io/json-peek/">
+<meta property="og:title" content="JSON Peek: a fast, private JSON viewer">
+<meta property="og:description" content="Collapsible tree, search and JSONPath, exact big numbers, 50 MB files. Runs locally; nothing is uploaded.">
+<meta property="og:image" content="https://janwan2003.github.io/json-peek/icon.png">
+<link rel="icon" href="favicon.png">
+<link rel="stylesheet" href="style.css">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"JSON Peek","applicationCategory":"DeveloperApplication","operatingSystem":"Any (web browser)","offers":{"@type":"Offer","price":"0"},"description":"Free JSON viewer and formatter that runs locally in the browser, with search, JSONPath and exact big-number handling."}
+</script>
+</head>
+<body>
+<header class="site">
+  <a class="logo" href="./"><img src="icon.png" alt="" width="28" height="28"> JSON Peek</a>
+  <nav><a href="#extension">Extension</a><a href="#features">Features</a><a href="#faq">FAQ</a><a href="privacy.html">Privacy</a><a href="https://github.com/janwan2003/json-peek">GitHub</a></nav>
+</header>
+
+<main>
+  <section class="hero">
+    <h1>JSON viewer &amp; formatter that never leaves your browser</h1>
+    <p class="lead">Paste JSON, drop a file or open one. You get a collapsible tree, search, JSONPath queries and exact 64-bit numbers. Files of 50&nbsp;MB and more stay smooth. Nothing is uploaded.</p>
+  </section>
+
+  <section class="tool" aria-label="JSON viewer">
+    <div class="tool-bar">
+      <label class="btn primary">Open file<input type="file" id="file" accept=".json,.jsonl,.ndjson,.geojson,.txt,application/json" hidden></label>
+      <button class="btn" id="sample">Load sample</button>
+      <button class="btn" id="clear">Clear</button>
+      <span class="sep"></span>
+      <label class="opt">Indent <select id="indent"><option value="2">2 spaces</option><option value="4">4 spaces</option><option value="tab">Tab</option></select></label>
+      <button class="btn" id="format" title="Re-format the input text">Format</button>
+      <button class="btn" id="minify" title="Minify the input text">Minify</button>
+      <label class="opt"><input type="checkbox" id="sort"> Sort keys</label>
+      <label class="opt"><input type="checkbox" id="multi"> JSON Lines</label>
+    </div>
+    <textarea id="input" spellcheck="false" aria-label="JSON input" placeholder='Paste JSON here (or drop a .json / .jsonl file anywhere on the page). Example: {"id": 9007199254740993, "ok": true}'></textarea>
+    <div id="viewer"></div>
+    <p class="small" id="note">Everything runs locally in this tab. Big files open from <em>Open file</em> without being copied into the text box.</p>
+  </section>
+
+  <section id="extension" class="card">
+    <h2>Use it on every JSON URL: the JSON Peek extension</h2>
+    <p>The browser extension shows the same viewer automatically whenever you open a JSON API response, a <code>.json</code> file, or an <code>application/x-ndjson</code> stream.</p>
+    <ul class="checks">
+      <li><strong>Open source (MIT).</strong> The code that ships is the code in the repository. There is no bundler and no minifier, so you can read every line.</li>
+      <li><strong>No network access, no analytics, no remote code.</strong> The only permission it asks for is <code>storage</code>, which remembers your theme. It also needs access to pages so it can read the JSON shown in the tab.</li>
+      <li><strong>No donation pop-ups, no affiliate links, no "sponsored" injections.</strong> It never will have them.</li>
+    </ul>
+    <p><a class="btn primary" href="download/json-peek-extension.zip">Download for Chrome / Edge / Brave (zip)</a>
+      <span class="small">Chrome Web Store listing coming soon. Until then: unzip, open <code>chrome://extensions</code>, turn on <em>Developer mode</em>, choose <em>Load unpacked</em> and pick the folder.</span></p>
+  </section>
+
+  <section id="features" class="grid">
+    <div class="card"><h3>Exact big numbers</h3><p><code>JSON.parse</code> rounds <code>9007199254740993</code> to <code>9007199254740992</code>, and most viewers inherit that bug. Database IDs, Twitter/X snowflakes and Discord IDs are then shown wrong. JSON Peek parses the text itself and shows every number exactly as it was sent. Numbers that JavaScript would change get an <span class="tag">exact</span> badge.</p></div>
+    <div class="card"><h3>Fast on large files</h3><p>The tree is virtualised: only the rows on screen exist in the page. A 50&nbsp;MB file with 3.3 million values is parsed in about a second, and scrolling stays smooth.</p></div>
+    <div class="card"><h3>Search and JSONPath</h3><p>Type text to search keys and values, and tick <em>Filter</em> to hide everything else. Start with <code>$</code> to run a JSONPath query such as <code>$.items[?(@.price &gt; 10)].name</code> or <code>$..id</code>.</p></div>
+    <div class="card"><h3>Copy paths, values and subtrees</h3><p>Select any value to see its path (<code>$.data[3].id</code>, jq <code>.data[3].id</code> or JavaScript style). Then copy the path, the value or the formatted subtree.</p></div>
+    <div class="card"><h3>Original key order</h3><p>Keys are shown in the order the server sent them. Viewers built on <code>JSON.parse</code> move numeric keys like <code>"10"</code> to the top.</p></div>
+    <div class="card"><h3>JSON Lines, JSONP, XSSI</h3><p>Handles NDJSON / JSON Lines logs, strips JSONP callbacks and <code>)]}'</code> anti-hijacking prefixes, and points to the exact line and column of a syntax error.</p></div>
+  </section>
+
+  <section class="card">
+    <h2>Keyboard shortcuts</h2>
+    <table class="keys">
+      <tr><td><kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>F</kbd> or <kbd>/</kbd></td><td>Search (press <kbd>Ctrl</kbd>+<kbd>F</kbd> again for the browser's own find)</td></tr>
+      <tr><td><kbd>Enter</kbd> / <kbd>Shift</kbd>+<kbd>Enter</kbd>, <kbd>n</kbd> / <kbd>N</kbd></td><td>Next / previous match</td></tr>
+      <tr><td><kbd>↑</kbd> <kbd>↓</kbd> (<kbd>j</kbd> <kbd>k</kbd>)</td><td>Move selection</td></tr>
+      <tr><td><kbd>←</kbd> <kbd>→</kbd> (<kbd>h</kbd> <kbd>l</kbd>)</td><td>Collapse / expand, or go to parent / child</td></tr>
+      <tr><td><kbd>Enter</kbd>, <kbd>Space</kbd>, click</td><td>Toggle a node. Add <kbd>Alt</kbd> to toggle its whole subtree</td></tr>
+      <tr><td><kbd>*</kbd></td><td>Expand everything under the selected node</td></tr>
+      <tr><td><kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>C</kbd></td><td>Copy the selected value</td></tr>
+    </table>
+  </section>
+
+  <section id="faq" class="card faq">
+    <h2>FAQ</h2>
+    <h3>Is my JSON uploaded anywhere?</h3>
+    <p>No. This page is static HTML and JavaScript. Parsing, formatting and search run in your browser tab, and the page sends no requests with your data. It works offline once loaded.</p>
+    <h3>Why does another formatter show a different number than my API returned?</h3>
+    <p>JavaScript numbers are 64-bit floating point. Integers above 2<sup>53</sup> (9,007,199,254,740,992) cannot all be represented, so <code>JSON.parse</code> silently rounds them. JSON Peek keeps the digits from the source text. Format, minify and copy reproduce them unchanged.</p>
+    <h3>How do I validate JSON?</h3>
+    <p>Paste it above. If it is invalid, you get the reason with the line and column, and the offending line highlighted. Common causes: trailing commas, single quotes, unquoted keys, comments.</p>
+    <h3>Can it open JSON Lines / NDJSON?</h3>
+    <p>Yes. Tick <em>JSON Lines</em>, or open a <code>.jsonl</code> / <code>.ndjson</code> file. Each line becomes one item in a list you can search and filter.</p>
+    <h3>What JSONPath syntax is supported?</h3>
+    <p><code>$</code>, <code>.key</code>, <code>['key']</code>, <code>[0]</code>, <code>[-1]</code>, <code>[0:5]</code>, <code>[*]</code>, <code>..key</code> (recursive), unions like <code>[0,2]</code>, and filters such as <code>[?(@.age &gt;= 18)]</code> or <code>[?(@.tags)]</code>.</p>
+  </section>
+</main>
+
+<footer class="site">
+  <p><strong>About:</strong> JSON Peek is a free, open-source JSON viewer. MIT licensed. <a href="privacy.html">Privacy</a> · <a href="https://github.com/janwan2003/json-peek">Source code</a></p>
+</footer>
+
+<script src="js/parse.js"></script>
+<script src="js/query.js"></script>
+<script src="js/viewer.js"></script>
+<script src="js/style.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

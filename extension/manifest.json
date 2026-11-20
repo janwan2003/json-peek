@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "JSON Peek",
+  "version": "0.1.0",
+  "description": "Fast, private JSON viewer: collapsible tree, search and JSONPath, exact big numbers. Open source, no tracking, no network access.",
+  "icons": { "16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png" },
+  "permissions": ["storage"],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_title": "JSON Peek: open the viewer", "default_icon": { "16": "icons/16.png", "32": "icons/32.png" } },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["parse.js", "query.js", "viewer.js", "style.js", "content.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ]
+}
