@@ -218,6 +218,15 @@ async function check(name, fn) {
     await shot('site-dark');
   });
 
+  await check('web tool: JSONPath tester page runs its preset query', async () => {
+    await page.goto(siteBase + '/jsonpath.html');
+    await page.waitForTimeout(300);
+    const s = await page.evaluate(READ);
+    assert.strictEqual(s.count, '1 / 2');
+    assert.strictEqual(s.path, '$.orders[0].sku');
+    await shot('jsonpath');
+  });
+
   await ctx.close();
   api.close(); site.close();
   fs.rmSync(userDir, { recursive: true, force: true });

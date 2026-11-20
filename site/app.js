@@ -72,5 +72,6 @@
   });
 
   setText(SAMPLE);
+  if (document.body.dataset.query) viewer.search(document.body.dataset.query);
   window.__jsonPeek = viewer;
 })();

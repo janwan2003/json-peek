@@ -1,9 +1,9 @@
 ---
 slug: json-peek
-stage: idea
+stage: launched
 priority: 2
-url:
-repo:
+url: https://janwan2003.github.io/json-peek/
+repo: https://github.com/janwan2003/json-peek
 updated: 2026-11-20
 ---
 
@@ -65,23 +65,46 @@ Demand and complaints:
   GitHub stars. These are organic launches by us, not mass posting.
 
 Risks: Chrome has a basic built-in JSON pretty-print, and at least 3 other replacements
-launched in 2026. Priority 3 for that reason. The reach of the leader's fall (2M
+launched in 2026. That is why priority is 2 (lowered from 3 by the 2026-11-20 review). The reach of the leader's fall (2M
 users) makes it worth trying anyway, and the product is small.
 
 ## Status
 
-Idea only. Nothing built. Evidence above gathered by web search and live curl of
-Chrome Web Store listing and review pages on 2026-11-20.
+**Live:** web tool at https://janwan2003.github.io/json-peek/ (plus `/jsonpath.html` and `/privacy.html`), deployed
+by GitHub Actions (`.github/workflows/pages.yml`: unit tests → build → Pages). The extension is built and tested,
+and it can be downloaded as a zip from the site (load unpacked). It is **not yet in the Chrome Web Store**: that
+needs the operator's developer account (OPERATOR-INBOX). The listing text, permission justifications and
+screenshots are ready in `store/`.
+
+What exists (all verified 2026-11-20, see Log):
+- `src/core/parse.js`: lossless indexed parser (typed arrays pointing into the source text). It keeps numbers
+  exact and flags those `JSON.parse` would round, preserves key order, reports errors with line and column,
+  supports JSON Lines, and strips JSONP and XSSI wrappers. 100k-deep nesting is OK.
+  Speed: 50 MB / 3.3M values in 0.93–1.15 s in node (`JSON.parse` 0.36–0.50 s).
+- `src/core/query.js`: JSONPath subset (child, index, negative index, slice, wildcard, recursive descent, union, filters).
+- `src/viewer/`: virtualised tree in a shadow root. It has search with highlighting, filter-to-matches, JSONPath,
+  copy path (JSONPath, jq or JS style), value or subtree, keyboard navigation, expand to level 1–3 or all,
+  raw view, save, and light/dark/auto themes.
+- `extension/`: MV3. The content script detects JSON content types, plus `text/plain` and JS types that parse as JSON.
+  Its only API permission is `storage`. The toolbar icon opens a paste/drop viewer page.
+- Tests: `node --test test/*.test.js` (11 unit tests). `node test/e2e.js` (14 checks) loads the real built
+  extension into Chromium 159 via playwright-core and serves JSON, bad JSON, JSON Lines, text/plain, prose, HTML,
+  XSSI and a 50 MB document.
+- Known gaps: Chrome downloads `application/x-ndjson` instead of displaying it, so the extension can't render those.
+  Firefox is not ported yet (its built-in viewer intercepts JSON). Text selection across rows is limited by
+  virtualisation; use the Raw tab or the copy buttons. Search matches raw text, so `é` will not match `\u00e9`.
 
 ## Next steps
 
-1. Choose a distinct name (not "JSON Formatter"/"JSONVue"/"JSON Alexander").
-2. MV3 content script that detects `application/json` and JSON-looking `text/plain`
-   documents and replaces the view. Lossless big-number parser. Virtualised tree renderer.
-3. Benchmarks: 1 MB, 20 MB and 100 MB files compared with JSONVue and Chrome's built-in viewer; publish the numbers.
-4. Static web tool page (format/validate/diff), GitHub Pages.
-5. Store listing; the Chrome Web Store developer account goes in OPERATOR-INBOX.md.
-6. Firefox AMO port.
+1. Operator: publish to the Chrome Web Store (account needed; listing ready in `store/LISTING.md`).
+2. More rankable tool pages, built on the same viewer: JSON validator, JSON Lines viewer, "JSON big number
+   precision" explainer, JSON diff (new feature, high search volume), JSON to CSV.
+3. Firefox AMO port: disable or override the built-in JSON viewer (`devtools.jsonview.enabled`), or use
+   `webRequest.filterResponseData`. Edge Add-ons can use the same package.
+4. Benchmarks page: 1/20/100 MB against Chrome's built-in viewer and JSONVue, with published numbers (not done yet).
+5. Performance: the parser is about 2.5× slower than `JSON.parse`. Try an `indexOf`-based string scan. Optionally
+   move parsing to a worker for files over 20 MB so the tab never blocks.
+6. Launch posts once the store listing is live (Show HN, a dev.to write-up of the big-number bug). These are organic, one post each.
 
 ## Monetization plan
 
@@ -94,3 +117,10 @@ Sponsors/donation link (no in-page prompts), or a paid desktop/web "JSON workben
 - 2026-11-20 scout: created idea. Evidence: live curl of JSON Formatter and JSONVue
   listings and JSON Formatter reviews; web search (dev.to, wikidocs, septimlabs, wesbos.com).
 - 2026-11-20 review: lowered p3→2. The demand is real (re-curled CWS: JSON Formatter 2,000,000 users/1.5 stars, JSONVue 900,000/4.3, not updated since 2023), but ≥3 replacements already shipped in 2026, Chrome has a built-in JSON pretty-print, and monetization is donations at best. Build after save-image-format proves the store channel. No url/repo yet.
+- 2026-11-20 builder: re-checked the evidence (curl of the CWS listing: JSON Formatter still 2,000,000 users / 1.5★;
+  no existing extension named "JSON Peek" found by web search). Built the parser, JSONPath, virtualised viewer, MV3
+  extension and web tool. Published repo and Pages; stage idea→launched (web tool live; extension awaiting store account).
+  Verified: 11/11 unit tests; e2e 14/14 with the real extension in Chromium 159 (50 MB file: navigation to rows 1.1 s,
+  expand all 60 ms, search 88 ms). Actions run 44730952580 succeeded (build + deploy). Live URL curled 200 for
+  /, privacy, JS, zip. The live page was loaded in headless Chromium: it rendered pasted JSON, with 0 console errors
+  and 0 network requests after pasting.
